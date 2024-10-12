@@ -1,0 +1,185 @@
+<div class="chart-container">
+
+    <form id="dropdownForm" style="margin-bottom: 20px; width: 800px;">
+        <select id="dropdown" name="dropdown">
+            <option value="" disabled selected>Select A Cryptocurrency</option>
+            {% for option in stuff.coin_id_list %}
+                <option value="{{ option }}">{{ option }}</option>
+            {% endfor %}
+        </select>
+        <select id="dropdown_currency" name="dropdown_currency">
+            <option value="" disabled selected>Select Currency</option>
+            {% for option in stuff.currency_symbols %}
+                <option value="{{ option }}">{{ option }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    
+    
+    <button onclick="changeToLine()">Line Graph</button>
+    <button onclick="changeToBar()">Bar Graph</button>
+    
+    <input type="range" min="1" max="100" value="10" class="slider" id="mySlider">
+    
+    <div id="chart-container">
+        <canvas id="chart" width="1200" height="800"></canvas>
+    </div>
+</div>
+
+<script>
+    var labels = {{ stuff.crypData|slice:":100"|safe }};
+    var data = {{stuff.actualPrice|slice:":100"|safe }};
+    var ctx = document.getElementById('chart').getContext('2d');
+    var currentChart;
+
+    function fetchData() {
+        var selectedOption = document.getElementById('dropdown').value;
+        var selectedCurrency = document.getElementById('dropdown_currency').value;
+        
+        var formData = new FormData();
+        formData.append('selected_option', selectedOption);
+        formData.append('selected_currency', selectedCurrency);
+        
+        fetch("{% url 'index' %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+
+            // Update the chart data variables with the new data received from the server
+            labels = data.crypData;
+            data = data.actualPrice;
+
+            // Update the chart using the updated data
+            if (currentChart) {
+                currentChart.data.labels = labels;
+                currentChart.data.datasets[0].data = data;
+                currentChart.options.scales.y.title.text = selectedCurrency; // Update y-axis title with selected currency
+                currentChart.update();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Handle errors here, like displaying an error message to the user
+        });
+    }
+
+    // Event listeners for both dropdowns
+    document.getElementById('dropdown').addEventListener('change', fetchData);
+    document.getElementById('dropdown_currency').addEventListener('change', fetchData);
+    
+    function createLineChart() {
+        currentChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Price',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Day' // Replace with your x-axis label
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '' // Leave it empty initially
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '{{stuff.currency_title}}',
+                        font: {
+                            size: 18
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createBarChart() {
+        currentChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Price',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Day' // Replace with your x-axis label
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '' // Leave it empty initially
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function changeToLine() {
+        if (currentChart) {
+            currentChart.destroy();
+        }
+        createLineChart();
+    }
+
+    function changeToBar() {
+        if (currentChart) {
+            currentChart.destroy();
+        }
+        createBarChart();
+    }
+
+    createLineChart();
+
+    function updateData() {
+        var sliderValue = document.getElementById("mySlider").value;
+        var slicedLabels = labels.slice(0, sliderValue);
+        var slicedActualPrice = data.slice(0, sliderValue);
+
+        if (currentChart) {
+            currentChart.data.labels = slicedLabels;
+            currentChart.data.datasets[0].data = slicedActualPrice;
+
+            currentChart.update();
+        }
+    }
+
+    document.getElementById("mySlider").addEventListener("input", updateData);
+</script>

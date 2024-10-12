@@ -1,0 +1,33 @@
+{%load static%}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Currency Visualization</title>
+    <link rel="stylesheet" href="{% static 'visualizer/base.css' %}">
+    <link rel="stylesheet" href="{% static 'visualizer/chart.css' %}">
+    <link rel="stylesheet" href="{% static 'visualizer/barView.css' %}">
+    <link rel="stylesheet" href="{% static 'visualizer/exchange.css' %}">
+    <link rel="stylesheet" href="{% static 'visualizer/pieChart.css' %}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body style="margin-top:150px">
+  <div class="grid-container">
+        <div class="grid-item">
+          {% include content1.template_name with stuff=content1.data %}
+        </div>
+        <div class="grid-item">
+          {% include content3.template_name with data=content3.data.bar_view_data %}
+        </div>
+        <div class="grid-item">
+          {% include content2.template_name with exchange_rates=content2.data.exchange_rates %}
+        </div>
+        <div class="grid-item">
+          {% include content4.template_name with coins=content4.data.portfolio_data %}
+        </div>
+    </div>
+  </div>
+</body>
+</html>
